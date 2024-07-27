@@ -1,66 +1,50 @@
-#include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
-
 #define INF 999
 #define MAX 10
-
-int cost[MAX][MAX], a[MAX][MAX];
-
-int min(int a, int b) {
-    return (a < b) ? a : b;
+void floydWarshall(int n, int graph[MAX][MAX], int dist[MAX][MAX]) {
+ int i, j, k;
+ for (i = 0; i < n; i++) {
+ for (j = 0; j < n; j++) {
+ dist[i][j] = graph[i][j];
+ }
+ }
+ // Floyd-Warshall algorithm
+ for (k = 0; k < n; k++) {
+ for (i = 0; i < n; i++) {
+ for (j = 0; j < n; j++) {
+ if (dist[i][k] + dist[k][j] < dist[i][j]) {
+ dist[i][j] = dist[i][k] + dist[k][j];
+ }
+ }
+ }
+ }
 }
-
-void allpaths(int cost[MAX][MAX], int a[MAX][MAX], int n) {
-    int i, j, k;
-    #pragma omp parallel for num_threads(2)
-    for (i = 0; i < n; i++) {
-        for (j = 0; j < n; j++) {
-            a[i][j] = cost[i][j];
-        }
-    }
-
-    #pragma omp parallel for num_threads(3) collapse(2) private(i, j, k)
-    for (k = 0; k < n; k++) {
-        for (i = 0; i < n; i++) {
-            for (j = 0; j < n; j++) {
-                if (a[i][k] != INF && a[k][j] != INF)
-                    a[i][j] = min(a[i][j], a[i][k] + a[k][j]);
-            }
-        }
-    }
-}
-
 int main() {
-    int i, j, n;
-
-    printf("\n\nEnter the number of vertices: ");
-    scanf("%d", &n);
-
-    if (n > MAX) {
-        printf("The maximum number of vertices supported is %d.\n", MAX);
-        return -1;
-    }
-
-    printf("\nEnter the cost adjacency matrix (use %d for INF):\n", INF);
-    for (i = 0; i < n; i++) {
-        for (j = 0; j < n; j++) {
-            scanf("%d", &cost[i][j]);
-        }
-    }
-
-    allpaths(cost, a, n);
-
-    printf("The shortest paths obtained are as follows:\n");
-    for (i = 0; i < n; i++) {
-        for (j = 0; j < n; j++) {
-            if (a[i][j] == INF)
-                printf("INF\t");
-            else
-                printf("%d\t", a[i][j]);
-        }
-        printf("\n");
-    }
-
-    return 0;
+ int n, i, j;
+ int graph[MAX][MAX], dist[MAX][MAX];
+ printf("Enter the number of vertices: ");
+ scanf("%d", &n);
+ printf("Enter the cost adjacency matrix (use %d for INF):\n", INF);
+ for (i = 0; i < n; i++) {
+ for (j = 0; j < n; j++) {
+ scanf("%d", &graph[i][j]);
+ if (graph[i][j] == 0 && i != j) {
+ graph[i][j] = INF; // No edge between i and j
+ }
+ }
+ }
+ floydWarshall(n, graph, dist);
+ printf("\nThe shortest paths between all pairs of vertices:\n");
+ for (i = 0; i < n; i++) {
+ for (j = 0; j < n; j++) {
+ if (dist[i][j] == INF) {
+ printf("INF\t");
+ } else {
+ printf("%d\t", dist[i][j]);
+ }
+ }
+ printf("\n");
+ }
+ return 0;
 }
